@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <nav>
+        <ul>
+            <li><a href="#section1">Home</a></li>
+            <li><a href="#section2">Experience</a></li>
+            <li><a href="#section3">Education</a></li>
+            <li><a href="#section4">Projects</a></li>
+        </ul>
+    </nav>
     <main>
         <section id="section1" class="snap-section">
             <h2>Kyle McFatter</h2>
@@ -17,7 +25,74 @@
 
         <section id="section2" class="snap-section">
             <h2>Professional Experience</h2>
-            <p>Kaon Interactive, Citizens Bank, WPI</p>
+            <div class="business-cards">
+                <!-- Card 1 -->
+                <div class="card kaon-card">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Kyle McFatter</h3>
+                            <p>Front-End Development Intern</p>
+                            <img src="kaonlogo.png" alt="Kaon Logo">
+                        </div>
+                        <div class="card-back">
+                            <p>Front-End Development Intern at Kaon Interactive from June 2023 to August 2023</p>
+                            <p>Maynard, MA</p>
+                            <p>Designed and implemented three-dimensional immersive web applications for clientele</p>
+                            <p>Boosted sales and marketing value for third parties by developing in-depth front-end applications using tools such as ReactJS</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="card citizens-card">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Kyle McFatter</h3>
+                            <p>UX Development Intern</p>
+                            <img src="citizensLogo.png" alt="Citizens Logo">
+                        </div>
+                        <div class="card-back">
+                            <p>User Experience Development Intern at Citizens from June 2022 to August 2022</p>
+                            <p>Westwood, MA</p>
+                            <p>Designed, modified, developed, and implemented technology solutions, focusing on front-end web and/or mobile development</p>
+                            <p>Tested and explored next-generation technologies for potential inclusion in future products</p>
+                            <p>Participated in code reviews of colleague work going to applications supporting over 10 million logins a month</p>
+                            <p>Demonstrated solutions to senior leaders</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="card codakid-card">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Kyle McFatter</h3>
+                            <p>Programming Instructor</p>
+                            <img src="codakidLogo.jpeg" alt="CodaKid Logo">
+                        </div>
+                        <div class="card-back">
+                            <p>Programming Instructor at CodaKid from June 2021 to August 2021</p>
+                            <p>Scottsdale, AZ</p>
+                            <p>Introduced students K-12 to foundational concepts of computer science</p>
+                            <p>Created lesson plans for each individual student according to their respective goals and abilities</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="card wpi-card">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Kyle McFatter</h3>
+                            <p>Teaching Assistant</p>
+                            <img src="wpi.jpeg" alt="WPI Logo">
+                        </div>
+                        <div class="card-back">
+                            <p>Department of Computer Science Teaching Assistant at Worcester Polytechnic Institute</p>
+                            <p>Provided assistance to students in understanding course material</p>
+                            <p>Assisted professors with grading and managing coursework</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </section>
 
         <section id="section3" class="snap-section">
@@ -38,7 +113,7 @@
                     <iframe width="560" height="315" src="https://www.youtube.com/embed/RuUlaJyyrJY" frameborder="0" allowfullscreen></iframe>
                 </div>
                 <div class="video-item">
-                    <h3>Camera Sudoku Solver</h3>
+                    <h3>Camera Sudoku Solver</h>
                     <iframe width="560" height="315" src="https://www.youtube.com/embed/7GydCBg6ICw" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
@@ -46,7 +121,26 @@
     </main>
 
     <footer>
-        <p>Contact: mcfatterkyle@gmail.com | Phone: (781) 375-7318 | LinkedIn: linkedin.com/in/kyle-mcfatter | GitHub: github.com/KyleWynnM</p>
+        <p>Contact: mcfatterkyle@gmail.com | Phone: (781) 375-7318</p>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <a href="https://www.linkedin.com/in/kyle-mcfatter" target="_blank">
+                <img src="linkedIn.png" alt="LinkedIn" style="width: 30px; height: 30px;">
+            </a>
+            <a href="https://github.com/KyleWynnM" target="_blank">
+                <img src="github.png" alt="GitHub" style="width: 30px; height: 30px;">
+            </a>
+        </div>
     </footer>
+
+    <script>
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseover', () => {
+                card.classList.add('is-flipped');
+            });
+            card.addEventListener('mouseout', () => {
+                card.classList.remove('is-flipped');
+            });
+        });
+    </script>
 </body>
 </html>
