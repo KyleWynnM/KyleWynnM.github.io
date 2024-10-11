@@ -6,6 +6,10 @@
     <title>Kyle McFatter</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
 </head>
 <body>
     <nav>
@@ -15,6 +19,7 @@
             <li><a href="#section3">Education</a></li>
             <li><a href="#section4">Projects</a></li>
             <li><a href="#section5">LeetCode</a></li>
+            <li><a href="#section6">ASL Predictor</a></li>
         </ul>
     </nav>
     <main>
@@ -27,7 +32,7 @@
         <section id="section2" class="snap-section">
             <h2>Professional Experience</h2>
             <div class="business-cards">
-                <!-- Card 1 -->
+                <!-- Card 1: Kaon Interactive -->
                 <div class="card kaon-card">
                     <div class="card-inner">
                         <div class="card-front">
@@ -43,7 +48,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- Card 2 -->
+
+                <!-- Card 2: Citizens -->
                 <div class="card citizens-card">
                     <div class="card-inner">
                         <div class="card-front">
@@ -61,7 +67,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- Card 3 -->
+
+                <!-- Card 3: CodaKid -->
                 <div class="card codakid-card">
                     <div class="card-inner">
                         <div class="card-front">
@@ -77,7 +84,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- Card 4 -->
+
+                <!-- Card 4: WPI -->
                 <div class="card wpi-card">
                     <div class="card-inner">
                         <div class="card-front">
@@ -92,7 +100,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
 
@@ -119,7 +126,7 @@
                 </div>
             </div>
         </section>
-    
+
         <section id="section5" class="snap-section">
             <h2>LeetCode</h2>
             <div class="video-container">
@@ -128,8 +135,22 @@
                 </div>
             </div>
         </section>
-        
 
+        <!-- New ASL Predictor Section -->
+        <section id="section6" class="snap-section">
+            <h2>ASL Letter Predictor</h2>
+            <h3 id="detected-letter">Detected Letter: </h3>
+            <div class="asl-container">
+                <!-- Combined video feed with canvas for drawing landmarks -->
+                <div class="camera-wrapper">
+                    <canvas id="outputCanvas"></canvas> <!-- Only one canvas used -->
+                </div>
+                <!-- ASL chart image -->
+                <div class="chart-wrapper">
+                    <img src="imgs/asl_chart.jpg" alt="ASL Alphabet Chart" class="asl-chart">
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer>
@@ -145,13 +166,142 @@
     </footer>
 
     <script>
-        document.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('mouseover', () => {
-                card.classList.add('is-flipped');
+        // Define global variables
+        let canvasElement = document.getElementById('outputCanvas');
+        let canvasCtx = canvasElement.getContext('2d');
+        let videoElement;
+        let model;
+        let previousDetectedLetter = null; // Track previous letter to avoid repeating
+
+        // Function to load the TensorFlow.js model
+        async function loadModel() {
+            model = await tf.loadLayersModel('./asl_hand_model5/model.json'); // Adjust the path to your model
+            console.log("Model loaded successfully.");
+        }
+
+        // Function to update detected letter in the DOM
+        function updateDetectedLetter(letter) {
+            const detectedLetterElement = document.getElementById('detected-letter');
+            if (detectedLetterElement) {
+                detectedLetterElement.textContent = `Detected Letter: ${letter}`;
+            } else {
+                console.log("Detected letter element not found in the DOM.");
+            }
+        }
+
+        // Function to preprocess hand landmarks into ratios
+        function calculateScaledRatios(landmarks) {
+            const xs = landmarks.map(landmark => landmark.x);
+            const ys = landmarks.map(landmark => landmark.y);
+            const zs = landmarks.map(landmark => landmark.z);
+            const min_x = Math.min(...xs), max_x = Math.max(...xs);
+            const min_y = Math.min(...ys), max_y = Math.max(...ys);
+            const min_z = Math.min(...zs), max_z = Math.max(...zs);
+
+            const scale_x = max_x - min_x;
+            const scale_y = max_y - min_y;
+            const scale_z = max_z - min_z;
+
+            let ratios = [];
+            for (let i = 0; i < landmarks.length; i++) {
+                for (let j = i + 1; j < landmarks.length; j++) {
+                    const ratio_x = (landmarks[i].x - min_x) / scale_x;
+                    const ratio_y = (landmarks[i].y - min_y) / scale_y;
+                    const ratio_z = (landmarks[i].z - min_z) / scale_z;
+                    ratios.push(ratio_x, ratio_y, ratio_z);
+                }
+            }
+            return ratios;
+        }
+
+        // Function to make predictions with the model
+        async function predictGesture(landmarks) {
+            if (!model) {
+                console.log("Model is not loaded yet!");
+                return null;
+            }
+
+            const ratios = calculateScaledRatios(landmarks);
+            const inputTensor = tf.tensor2d([ratios]);
+            const prediction = await model.predict(inputTensor).data();
+            const maxIndex = prediction.indexOf(Math.max(...prediction));
+
+            const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            return labels[maxIndex];
+        }
+
+        // Initialize MediaPipe Hands and camera feed
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement = document.createElement('video');
+            videoElement.srcObject = stream;
+            videoElement.play();
+
+            videoElement.addEventListener('loadedmetadata', () => {
+                // Setup canvas dimensions based on video size
+                canvasElement.width = videoElement.videoWidth;
+                canvasElement.height = videoElement.videoHeight;
             });
-            card.addEventListener('mouseout', () => {
-                card.classList.remove('is-flipped');
+
+            return new Promise((resolve) => {
+                videoElement.onloadeddata = () => {
+                    resolve(videoElement);
+                };
             });
+        }
+
+        // Function to process hand landmarks and update lesson page
+        async function onResults(results) {
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height); // Draw video frame onto canvas
+
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    // Draw hand landmarks directly on the webcam feed
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#e598ff', lineWidth: 2 });
+                    drawLandmarks(canvasCtx, landmarks, { color: '#ca00ff', lineWidth: 2, radius: 3 });
+
+                    // Predict the letter
+                    const detectedLetter = await predictGesture(landmarks);
+                    console.log("Detected Letter:", detectedLetter);
+
+                    if (detectedLetter) {
+                        // Update the detected letter in the DOM
+                        updateDetectedLetter(detectedLetter);
+
+                        // Update the previous detected letter
+                        previousDetectedLetter = detectedLetter;
+                    }
+                }
+            }
+        }
+
+        // Load the model and start the camera feed when the page is fully loaded
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadModel();
+            const video = await setupCamera();
+
+            const hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            hands.onResults(onResults);
+
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await hands.send({ image: video });
+                },
+                width: 640,
+                height: 480
+            });
+            camera.start();
         });
     </script>
 </body>
